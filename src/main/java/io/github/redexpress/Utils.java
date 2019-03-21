@@ -1,5 +1,6 @@
 package io.github.redexpress;
 
+import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 import java.math.BigInteger;
@@ -41,9 +42,20 @@ public class Utils {
             ++zeroCount;
             zeros.append('1');
         }
-        StringBuilder sb = new StringBuilder();
-        BigInteger i = new BigInteger(input, zeroCount, input.length - zeroCount);
 
+        StringBuilder sb = new StringBuilder();
+
+        BigInteger i = null;
+        if (input[zeroCount] < 0) {
+            byte[] bts = new byte[input.length - zeroCount + 1];
+            System.arraycopy(input,zeroCount + 1, bts, 2,input.length - zeroCount - 1);
+            int unsignedValue = input[zeroCount] + 2 * Byte.MAX_VALUE + 2;
+            bts[0] = (byte)((unsignedValue >> 8) & 0xff);
+            bts[1] = (byte)(unsignedValue & 0xff);
+            i = new BigInteger(bts);
+        } else {
+            i = new BigInteger(input, zeroCount, input.length - zeroCount);
+        }
         while(i.intValue() != 0) {
             int remainder = i.mod(BigInteger.valueOf(58)).intValue();
             sb.append(alphabet.charAt(remainder));
@@ -103,5 +115,28 @@ public class Utils {
             }
         }
         return sb.toString();
+    }
+
+    public static byte[] merge(byte[] a, byte[] b){
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
+
+    public static byte[] merge(byte bt, byte[] b){
+        byte[] a = new byte[1];
+        a[0] = bt;
+        return merge(a, b);
+    }
+
+    public static byte[] merge(byte a[], byte bt){
+        byte[] b = new byte[1];
+        b[0] = bt;
+        return merge(a, b);
+    }
+
+    public static byte[] hex2byte(String s){
+        return new BigInteger(s, 16).toByteArray();
     }
 }
