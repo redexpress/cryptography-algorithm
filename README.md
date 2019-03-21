@@ -30,7 +30,7 @@ y=16388935128781238405526710466724741593761085120864331449066658622400339362166
 ```
 calc_bitcoin_address(x):
     if is_odd(x):
-    		prefix1 = 0x03
+        prefix1 = 0x03
     else
         prefix1 = 0x02
     digest = ripemd160(sha256(prefix1 | to_bytes(x) )
