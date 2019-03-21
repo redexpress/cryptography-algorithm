@@ -6,14 +6,17 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+
+import static io.github.redexpress.Utils.encodeToBase62xString;
 import static io.github.redexpress.Utils.sha256;
+import static io.github.redexpress.Utils.base58encode;
 
 public class CryptographyAlgorithmTest {
 
 	@Test
 	public void encode() throws Exception{
 		String text = "中文简体";
-		String encoded = new Base62x().encodeToBase62xString(text.getBytes(StandardCharsets.UTF_8));
+		String encoded = encodeToBase62xString(text.getBytes(StandardCharsets.UTF_8));
 		System.out.println(encoded);
 	}
 
@@ -48,7 +51,9 @@ public class CryptographyAlgorithmTest {
 		System.arraycopy(hash160ValueWith00Prefix,0,finalHashValue, 0, hash160ValueWith00Prefix.length);
 		System.arraycopy(doubleHashValue,0, finalHashValue, hash160ValueWith00Prefix.length, 4);
 		System.out.println(Hex.encodeHexString(finalHashValue));
-		String base56Value = Base58.encode(finalHashValue);
+		String base56Value = base58encode(finalHashValue);
+		byte[] decode = Utils.base58decode(base56Value);
+		System.out.println("de " + Hex.encodeHexString(decode));
 		System.out.println("address: " + base56Value);
 		System.out.println(s);
 		System.out.println(comp);

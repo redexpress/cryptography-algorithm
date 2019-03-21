@@ -2,8 +2,11 @@ package io.github.redexpress;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 public class Utils {
 
@@ -25,5 +28,80 @@ public class Utils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static String base58encode(byte[] input) {
+        if (input.length == 0) {
+            return "";
+        }
+        String alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        int zeroCount = 0;
+        StringBuilder zeros = new StringBuilder();
+        while (zeroCount < input.length && input[zeroCount] == 0) {
+            ++zeroCount;
+            zeros.append('1');
+        }
+        StringBuilder sb = new StringBuilder();
+        BigInteger i = new BigInteger(input, zeroCount, input.length - zeroCount);
+
+        while(i.intValue() != 0) {
+            int remainder = i.mod(BigInteger.valueOf(58)).intValue();
+            sb.append(alphabet.charAt(remainder));
+            i = i.divide(BigInteger.valueOf(58));
+        }
+        return zeros.append(sb.reverse().toString()).toString();
+    }
+
+    public static byte[] base58decode(String input) {
+        if (input.length() == 0) {
+            return new byte[0];
+        }
+        String alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        int zeroCount = 0;
+        StringBuilder zeros = new StringBuilder();
+        while (zeroCount < input.length() && input.charAt(zeroCount) == '1') {
+            ++zeroCount;
+        }
+        if (input.length() == zeroCount) {
+            return new byte[zeroCount];
+        }
+        byte[] value = input.substring(zeroCount).getBytes(StandardCharsets.US_ASCII);
+        for(int i = 0; i < value.length; i++) {
+            value[i] = (byte)(alphabet.indexOf(value[i]));
+        }
+        if (value.length == 1){
+            byte[] result = new byte[zeroCount +  1];
+            result[zeroCount] = value[0];
+            return result;
+        }
+        BigInteger v = BigInteger.valueOf(value[0]);
+        for(int i = 1; i < value.length; i++) {
+            v = v.multiply(BigInteger.valueOf(58)).add(BigInteger.valueOf(value[i]));
+        }
+        byte[] resultBytes = v.toByteArray();
+        byte[] result = new byte[zeroCount +  resultBytes.length];
+        System.arraycopy(resultBytes, 0, result, zeroCount, resultBytes.length);
+        return result;
+    }
+
+    public static String encodeToBase62xString(byte[] bytes) {
+        String str = Base64.getEncoder().encodeToString(bytes);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            String base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+            String base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyz";
+            char c = str.charAt(i);
+            int idx = base64.indexOf(c);
+            if (idx < 61) {
+                sb.append(base62.charAt(idx));
+            } else if (idx == 61) {
+                sb.append("x1");
+            } else if (idx == 62) {
+                sb.append("x2");
+            } else if (idx == 63) {
+                sb.append("x3");
+            }
+        }
+        return sb.toString();
     }
 }
