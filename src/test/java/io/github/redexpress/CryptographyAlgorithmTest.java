@@ -1,6 +1,5 @@
 package io.github.redexpress;
 
-import com.chrylis.codec.base58.Base58Codec;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.junit.Test;
@@ -14,10 +13,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.interfaces.ECKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import static io.github.redexpress.Utils.*;
+import static org.junit.Assert.assertEquals;
 
 public class CryptographyAlgorithmTest {
 
@@ -48,20 +49,25 @@ public class CryptographyAlgorithmTest {
 		byte[] hash160ValueWith00Prefix = new byte[d.getDigestSize() + 1];
 		d.doFinal(hash160ValueWith00Prefix, 1);
 		System.out.println(Hex.encodeHexString(hash160ValueWith00Prefix));
-		byte[] doubleHashValue = sha256(sha256(hash160ValueWith00Prefix));
-		byte[] finalHashValue = new byte[hash160ValueWith00Prefix.length + 4];
-		System.arraycopy(hash160ValueWith00Prefix,0,finalHashValue, 0, hash160ValueWith00Prefix.length);
-		System.arraycopy(doubleHashValue,0, finalHashValue, hash160ValueWith00Prefix.length, 4);
-		System.out.println(Hex.encodeHexString(finalHashValue));
-		String base56Value = base58encode(finalHashValue);
-		byte[] decode = Utils.base58decode(base56Value);
+
+        String base58Value = base58check(hash160ValueWith00Prefix);
+		byte[] decode = Utils.base58decode(base58Value);
 		System.out.println("de " + Hex.encodeHexString(decode));
-		System.out.println("address " + (comp ? " comp: " : "nocomp: ") + base56Value);
+		System.out.println("address " + (comp ? " comp: " : "nocomp: ") + base58Value);
 		System.out.println(s);
-		return base56Value;
+		return base58Value;
 	}
 
-	@Test
+    private String base58check(byte[] input) {
+        byte[] doubleHashValue = sha256(sha256(input));
+        byte[] checksum = new byte[4];
+        System.arraycopy(doubleHashValue, 0, checksum, 0, 4);
+        byte[] merged =  merge(input, checksum);
+        System.out.println(Hex.encodeHexString(merged));
+        return base58encode(merged);
+    }
+
+    @Test
 	public void publicKey() {
 		String publicKeyX = "41637322786646325214887832269588396900663353932545912953362782457239403430124";
 		String publicKeyY = "16388935128781238405526710466724741593761085120864331449066658622400339362166";
@@ -78,6 +84,24 @@ public class CryptographyAlgorithmTest {
 		System.out.println(address(publicKey));
 
 	}
+
+	@Test
+	public void privateKey() {
+
+	    String s = "3aba4162c7251c891207b747840551a71939b0de081f85c4e44cf7c13e41daa6";
+        BigInteger i = new BigInteger(s, 16);
+        byte[] b = i.toByteArray();
+        byte[] nocomp = merge((byte)0x80, b); // 0xef test
+        byte[] comp = merge(nocomp, (byte)0x01);
+        System.out.println("no " + base58check(nocomp));
+        System.out.println(" c " + base58check(comp));
+    }
+
+
+	@Test
+    public void bip38_noCompression_noEcMultiply_test() throws Exception {
+
+    }
 
 
 	@Test

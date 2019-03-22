@@ -48,11 +48,6 @@
 			<artifactId>bcprov-jdk16</artifactId>
 			<version>1.46</version>
 		</dependency>
-		<dependency>
-			<groupId>com.chrylis</groupId>
-			<artifactId>base58-codec</artifactId>
-			<version>1.2.0</version>
-		</dependency>
 
 
 
